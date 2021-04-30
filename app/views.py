@@ -7,13 +7,41 @@ This file creates your application.
 
 from app import app, db
 from flask import render_template, request, redirect, url_for, flash
-from app.forms import UserForm
+from app.forms import UserForm, LoginForm
 from app.models import User
-# import sqlite3
+from flask_login import LoginManager
+from werkzeug.security import generate_password_hash
+import uuid
 
-###
-# Routing for your application.
-###
+login_manager = LoginManager()
+
+login_manager.login_view = 'login'
+login_manager.login_message_category = 'info'
+login_manager.login_message = 'Access denied.'
+
+login_manager.init_app(app)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        user_id = request.form.get('user')
+        user = query_user(user_id)
+        if user is not None and request.form['password'] == user['password']:
+            curr_user = User()
+            curr_user.id = user_id
+
+            # 通过Flask-Login的login_user方法登录用户
+            login_user(curr_user)
+
+            return redirect(url_for('show_users'))
+
+    flash('Wrong username or password!')
+
+@app.route('/logout')
+# @login_required
+def logout():
+    logout_user()
+    return 'Logged out successfully!'
 
 @app.route('/test/<name>')
 def test(name):
@@ -21,10 +49,10 @@ def test(name):
 
 @app.route('/')
 def home():
-    """Render website's home page."""
-    return render_template('home.html')
+    return render_template('login.html')
 
 @app.route('/about/')
+@login_required
 def about():
     """Render the website's about page."""
     return render_template('about.html', name="Mary Jane")
@@ -38,13 +66,13 @@ def show_users():
 
 @app.route('/add-user', methods=['POST', 'GET'])
 def add_user():
-    user_form = UserForm()
+    user_form = LoginForm()
 
     if request.method == 'POST':
         if user_form.validate_on_submit():
             # Get validated data from form
             name = user_form.name.data # You could also have used request.form['name']
-            email = user_form.email.data # You could also have used request.form['email']
+            password = user_form.password.data # You could also have used request.form['email']
 
             users = db.session.query(User).all()
             for user in users:
@@ -53,7 +81,7 @@ def add_user():
                     return redirect(url_for('add_user'))
 
             # save user to database
-            user = User(name, email)
+            user = User(name, generate_password_hash(password), uuid.uuid4())
             db.session.add(user)
             db.session.commit()
 
