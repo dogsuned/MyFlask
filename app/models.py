@@ -1,54 +1,33 @@
 from app import db
 
-SQLALCHEMY_DATABASE_URI = 'sqlite:///usermanage.db'
-
-SQLALCHEMY_BINDS = {
-    'users': 'sqlite:///users.db',
-    'appmeta': 'sqlite:///appmeta.db'
-}
-
 class User(db.Model):
-    __tablename__ = 'users'
+    __tablename__ = 'user'
+
     id = db.Column(db.Integer, primary_key = True)
     name = db.Column(db.String(64), unique=True)
     password = db.Column(db.String(64))
-
-    year = db.relationship("Years",backref = "users")
+    data = db.relationship('Data', backref = 'user')
 
     def __init__(self, name, password):
         self.name = name
         self.password = password
 
     def __repr__(self):
-        return '<User %r>' % self.name
+        return '<name %s password %s id %d>' % (self.name, self.password, self.id)
 
-class Years(db.Model):
-    __tablename__ = 'years'
-
-    id = db.Column(db.Integer, primary_key=True)
-    year = db.Column(db.Integer, unique=True)
-    parent_id = db.Column(db.Integer, db.ForeignKey(User.id))
-
-    content = db.relationship("Content",backref = "years")
-
-    def __init__(self, name, content):
-        self.name = name
-        self.content = content
-
-    def __repr__(self):
-        return '<year %r>' % self.year
-
-class Content(db.Model):
-    __tablename__ = 'content'
+class Data(db.Model):
+    __tablename__ = 'data'
 
     id = db.Column(db.Integer, primary_key=True)
-    month = db.Column(db.Integer, unique=True)
-    data = db.Column(db.String(255))
-    parent_id = db.Column(db.Integer, db.ForeignKey(Years.id))
+    year = db.Column(db.Integer)
+    month = db.Column(db.Integer)
+    wage = db.Column(db.String(255))
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id))
 
-    def __init__(self, month, data):
+    def __init__(self, year, month, wage):
+        self.year = year
         self.month = month
-        self.data = data
+        self.wage = wage
 
     def __repr__(self):
-        return '<month %r>' % self.month
+        return '<id %d year %d month %d wage %s user_id %d>' % (self.id, self.year, self.month, self.wage, self.user_id)

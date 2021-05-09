@@ -8,44 +8,62 @@ This file creates your application.
 from app import app, db
 from flask import render_template, request, redirect, url_for, flash
 from app.forms import UserForm, LoginForm
-from app.models import User
-from flask_login import LoginManager
+from app.models import User, Data
+from flask_login import LoginManager, login_required
 from werkzeug.security import generate_password_hash
-import uuid
+import time
 
-login_manager = LoginManager()
+# login_manager = LoginManager()
 
-login_manager.login_view = 'login'
-login_manager.login_message_category = 'info'
-login_manager.login_message = 'Access denied.'
+# login_manager.login_view = 'login'
+# login_manager.login_message_category = 'info'
+# login_manager.login_message = 'Access denied.'
 
-login_manager.init_app(app)
+# login_manager.init_app(app)
 
-@app.route('/login', methods=['GET', 'POST'])
+def get_all_users():
+    return db.session.query(User).all()
+
+def get_user_wage(name):
+    users = get_all_users()
+    # for user in users:
+    #     if (user.name == name):
+    #         return Content.query.filter(Content.user_id == user.uuid).all()
+    #         # return db.session.query(Content).filter(Content.user_id == user.uuid).all()
+    return None
+
+@app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        user_id = request.form.get('user')
-        user = query_user(user_id)
-        if user is not None and request.form['password'] == user['password']:
-            curr_user = User()
-            curr_user.id = user_id
+        name = request.form.get('name')
+        password = request.form.get('password')
 
-            # 通过Flask-Login的login_user方法登录用户
-            login_user(curr_user)
+        users = get_all_users()
+        # print(users)
+        for user in users:
+            if (user.name == name):
+                if (user.password == generate_password_hash(password)):
+                    # login_user(curr_user)
+                    return redirect(url_for('show_users'))
+                else:
+                    flash('密码错误')
+                    return redirect(url_for('login'))
 
-            return redirect(url_for('show_users'))
+        print('账号未注册')
+        # return redirect(url_for('register'))
+        # return redirect(url_for('login'))
+    print('Wrong username or password!')
+    return render_template('login.html')
 
-    flash('Wrong username or password!')
+# @app.route('/logout')
+# # @login_required
+# def logout():
+#     logout_user()
+#     return 'Logged out successfully!'
 
-@app.route('/logout')
-# @login_required
-def logout():
-    logout_user()
-    return 'Logged out successfully!'
-
-@app.route('/test/<name>')
-def test(name):
-    return 'test %s' % name
+# @app.route('/test/<name>')
+# def test(name):
+#     return 'test %s' % name
 
 @app.route('/')
 def home():
@@ -59,7 +77,7 @@ def about():
 
 @app.route('/users')
 def show_users():
-    label = ('姓名', '邮箱')
+    label = ('姓名', '密码')
     users = db.session.query(User).all() # or you could have used User.query.all()
 
     return render_template('show_users.html', label = label, users=users)
@@ -91,13 +109,13 @@ def add_user():
     flash_errors(user_form)
     return render_template('add_user.html', form=user_form)
 
-@app.route('/deluser/<name>')
-def del_user(name):
-    users = db.session.query(User).all()
-    for user in users:
-        if user.name == name:
-            flash('user %s already exist' % name)
-            return redirect(url_for('add_user'))
+# @app.route('/deluser/<name>')
+# def del_user(name):
+#     users = db.session.query(User).all()
+#     for user in users:
+#         if user.name == name:
+#             flash('user %s already exist' % name)
+#             return redirect(url_for('add_user'))
 
 # Flash errors from the form if validation fails
 def flash_errors(form):
@@ -137,4 +155,4 @@ def page_not_found(error):
 
 
 if __name__ == '__main__':
-    app.run(debug=True,host="0.0.0.0",port="8080")
+    app.run(debug=True)
