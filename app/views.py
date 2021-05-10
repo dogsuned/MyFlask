@@ -7,19 +7,78 @@ This file creates your application.
 
 from app import app, db
 from flask import render_template, request, redirect, url_for, flash
-from app.forms import UserForm, LoginForm
+from app.forms import RegisterForm, LoginForm
 from app.models import User, Data
-from flask_login import LoginManager, login_required
+# from flask_login import login_required
+from flask_login import login_user, login_required, current_user, logout_user
 from werkzeug.security import generate_password_hash
 import time
 
-# login_manager = LoginManager()
 
-# login_manager.login_view = 'login'
-# login_manager.login_message_category = 'info'
-# login_manager.login_message = 'Access denied.'
 
-# login_manager.init_app(app)
+
+
+@app.context_processor
+def inject_user():
+    user = User.query.first()
+    return dict(user=user)
+
+
+@app.route('/')
+@app.route('/index')
+def index():
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
+    return render_template('index.html', title="首页")
+
+
+@app.route('/login', methods=['POST', 'GET'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        name = form.username.data
+        pwd = form.password.data
+        user = User.query.filter_by(name=name).first()
+        if user and user.check_password_hash(pwd):
+            login_user(user)
+            flash('登陆成功。', category='info')
+            return redirect(url_for('index'))
+        else:
+            flash("密码或账户错误。", category='error')
+    return render_template('login.html', title='登录', form=form)
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('再见！')
+    return redirect(url_for('login'))
+
+
+@app.route('/register', methods=['POST', 'GET'])
+def register():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        email = form.email.data
+        pwd = form.pwd.data
+        user = User(name=username, email=email)
+        user.generate_password_hash(pwd)
+        db.session.add(user)
+        db.session.commit()
+        flash('注册成功', category='info')
+        return redirect(url_for('login'))
+    return render_template('register.html', title='注册', form=form)
+
+
+
+
+
+
+
+
+
 
 def get_all_users():
     return db.session.query(User).all()
@@ -38,21 +97,14 @@ def login():
         name = request.form.get('name')
         password = request.form.get('password')
 
-        print(type(password))
-        print('name: %s password: %s' % (name, password))
         users = get_all_users()
-        # print(users)
         for user in users:
-            print(type(user.password))
-            if (user.name == name):
-                return redirect(url_for('show_users'))
-                # print('+++++++++++++++++')
-                # if (user.password == password):
-                #     print("----------------")
-                #     # login_user(curr_user)
-                # else:
-                #     print('密码错误')
-                #     return redirect(url_for('login'))
+            if (str(user.name).strip() == name.strip()):
+                if (str(user.password).strip() == password.strip()):
+                    # login_user(curr_user)
+                    return redirect(url_for('show_users'))
+                else:
+                    return redirect(url_for('login'))
 
         print('账号未注册')
         # return redirect(url_for('register'))
@@ -119,17 +171,13 @@ def add_user():
 
 @app.route('/deluser/<name>')
 def del_user(name):
-    print('------------->')
-    print(name)
     users = db.session.query(User).all()
     for user in users:
-        print(user)
-        if user.name.strip() == name.strip():
-            print("delete--------- %s" % name)
+        print(str(user.name))
+        if str(user.name).strip() == name.strip():
             db.session.delete(user)
             db.session.commit()
-            # flash('user %s delete success' % name)
-    time.sleep(3)
+            flash('user %s delete success' % name)
     return redirect(url_for('show_users'))
 
 # Flash errors from the form if validation fails

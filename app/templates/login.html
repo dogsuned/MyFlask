@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>用户登录</title>
+<link rel="icon" href="../static/pic/logo.ico" type="image/x-icon">
 <style>
 /* 让页面所有元素的padding和margin都设置为0 */ 
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -36,18 +37,14 @@ form button{
     border:1px solid black;
     border-radius:4px;
     cursor:pointer; 
-}                                                                                                                                                  
+}
 </style>
 </head>
-<body background="../static/pic/backround.png" style=" background-repeat:no-repeat ;background-size:100% 100%;
+<body background="../static/pic/background.jpg" style=" background-repeat:no-repeat ;background-size:100% 100%;
 background-attachment: fixed;">
 <div class="login">
   <h1>Login</h1>
-  <form action="{{ url_for('login') }}" method="post">
-    <input type="text" name="name" placeholder="用户名" required="required">
-    <input type="password" name="password" placeholder="密  码" required="required">
-  <button type="submit">登录</button>
-  </form>
+  {% from 'bootstrap/form.html' import render_form %} {{ render_form(form) }}
 </div>
 </body>
 </html>

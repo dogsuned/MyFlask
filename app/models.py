@@ -1,6 +1,12 @@
-from app import db
+from app import db, login_manager
+from flask_login import UserMixin
 
-class User(db.Model):
+@login_manager.user_loader
+def load_user(user_id):
+    user = User.query.get(user_id)
+    return user
+
+class User(db.Model, UserMixin):
     __tablename__ = 'user'
 
     id = db.Column(db.Integer, primary_key = True)
@@ -8,9 +14,11 @@ class User(db.Model):
     password = db.Column(db.String(64))
     data = db.relationship('Data', backref = 'user')
 
-    def __init__(self, name, password):
-        self.name = name
-        self.password = password
+    def generate_password_hash(self, pwd):
+        self.pwd = generate_password_hash(pwd)
+
+    def check_password_hash(self, pwd):
+        return check_password_hash(self.pwd, pwd)
 
     def __repr__(self):
         return '<name %s password %s id %d>' % (self.name, self.password, self.id)
