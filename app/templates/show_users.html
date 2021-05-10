@@ -40,7 +40,7 @@
                       <tbody>
                       {% for i in users %}
                           <tr>
-                              <td><a href="{{ url_for('test', name = i.name) }}">{{ i.name }}</a></td><td>{{ i.password }}</td>
+                              <td><a href="{{ url_for('del_user', name = i.name) }}">{{ i.name }}</a></td><td>{{ i.password }}</td>
                           </tr>
                       {% endfor %}
                       </tbody>

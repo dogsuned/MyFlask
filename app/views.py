@@ -38,16 +38,21 @@ def login():
         name = request.form.get('name')
         password = request.form.get('password')
 
+        print(type(password))
+        print('name: %s password: %s' % (name, password))
         users = get_all_users()
         # print(users)
         for user in users:
+            print(type(user.password))
             if (user.name == name):
-                if (user.password == generate_password_hash(password)):
-                    # login_user(curr_user)
-                    return redirect(url_for('show_users'))
-                else:
-                    flash('密码错误')
-                    return redirect(url_for('login'))
+                return redirect(url_for('show_users'))
+                # print('+++++++++++++++++')
+                # if (user.password == password):
+                #     print("----------------")
+                #     # login_user(curr_user)
+                # else:
+                #     print('密码错误')
+                #     return redirect(url_for('login'))
 
         print('账号未注册')
         # return redirect(url_for('register'))
@@ -70,10 +75,13 @@ def home():
     return render_template('login.html')
 
 @app.route('/about/')
-@login_required
 def about():
     """Render the website's about page."""
-    return render_template('about.html', name="Mary Jane")
+    return render_template('about.html', name="Dogsuned")
+
+@app.route('/test/<name>')
+def test(name):
+    return "%s" % name
 
 @app.route('/users')
 def show_users():
@@ -99,7 +107,7 @@ def add_user():
                     return redirect(url_for('add_user'))
 
             # save user to database
-            user = User(name, generate_password_hash(password), uuid.uuid4())
+            user = User(name, password)
             db.session.add(user)
             db.session.commit()
 
@@ -109,13 +117,20 @@ def add_user():
     flash_errors(user_form)
     return render_template('add_user.html', form=user_form)
 
-# @app.route('/deluser/<name>')
-# def del_user(name):
-#     users = db.session.query(User).all()
-#     for user in users:
-#         if user.name == name:
-#             flash('user %s already exist' % name)
-#             return redirect(url_for('add_user'))
+@app.route('/deluser/<name>')
+def del_user(name):
+    print('------------->')
+    print(name)
+    users = db.session.query(User).all()
+    for user in users:
+        print(user)
+        if user.name.strip() == name.strip():
+            print("delete--------- %s" % name)
+            db.session.delete(user)
+            db.session.commit()
+            # flash('user %s delete success' % name)
+    time.sleep(3)
+    return redirect(url_for('show_users'))
 
 # Flash errors from the form if validation fails
 def flash_errors(form):

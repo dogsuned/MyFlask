@@ -10,7 +10,7 @@
 .login { 
     position: absolute;
     top: 50%;
-    left: 50%;
+    left: 70%;
     margin: -150px 0 0 -150px;
     width:300px;
     height:300px;
@@ -44,7 +44,7 @@ background-attachment: fixed;">
 <div class="login">
   <h1>Login</h1>
   <form action="{{ url_for('login') }}" method="post">
-    <input type="text" name="user" placeholder="用户名" required="required">
+    <input type="text" name="name" placeholder="用户名" required="required">
     <input type="password" name="password" placeholder="密  码" required="required">
   <button type="submit">登录</button>
   </form>
