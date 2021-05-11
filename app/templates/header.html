@@ -16,6 +16,10 @@
             <li><a href="{{ url_for('show_users') }}">所有成员</a></li>
             <li><a href="{{ url_for('add_user') }}">添加成员</a></li>
           </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#">你好  {{ user.name }}</a></li>
+            <li><a href="{{ url_for('logout') }}">退出登录</a></li>
+          </ul>
         </div><!--/.nav-collapse -->
       </div>
 </nav>

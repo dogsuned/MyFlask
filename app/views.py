@@ -14,14 +14,9 @@ from flask_login import login_user, login_required, current_user, logout_user
 from werkzeug.security import generate_password_hash
 import time
 
-
-
-
-
 @app.context_processor
 def inject_user():
-    user = User.query.first()
-    return dict(user=user)
+    return dict(user=current_user)
 
 
 @app.route('/')
@@ -29,7 +24,7 @@ def inject_user():
 def index():
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
-    return render_template('index.html', title="首页")
+    return render_template('show_users.html')
 
 
 @app.route('/login', methods=['POST', 'GET'])
@@ -39,10 +34,11 @@ def login():
         name = form.username.data
         pwd = form.password.data
         user = User.query.filter_by(name=name).first()
-        if user and user.check_password_hash(pwd):
+        # if user and user.check_password_hash(pwd):
+        if user:
             login_user(user)
             flash('登陆成功。', category='info')
-            return redirect(url_for('index'))
+            return redirect(url_for('show_users'))
         else:
             flash("密码或账户错误。", category='error')
     return render_template('login.html', title='登录', form=form)
@@ -72,16 +68,9 @@ def register():
     return render_template('register.html', title='注册', form=form)
 
 
-
-
-
-
-
-
-
-
 def get_all_users():
     return db.session.query(User).all()
+
 
 def get_user_wage(name):
     users = get_all_users()
@@ -91,65 +80,42 @@ def get_user_wage(name):
     #         # return db.session.query(Content).filter(Content.user_id == user.uuid).all()
     return None
 
-@app.route('/', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        password = request.form.get('password')
 
-        users = get_all_users()
-        for user in users:
-            if (str(user.name).strip() == name.strip()):
-                if (str(user.password).strip() == password.strip()):
-                    # login_user(curr_user)
-                    return redirect(url_for('show_users'))
-                else:
-                    return redirect(url_for('login'))
-
-        print('账号未注册')
-        # return redirect(url_for('register'))
-        # return redirect(url_for('login'))
-    print('Wrong username or password!')
-    return render_template('login.html')
-
-# @app.route('/logout')
-# # @login_required
-# def logout():
-#     logout_user()
-#     return 'Logged out successfully!'
-
-# @app.route('/test/<name>')
-# def test(name):
-#     return 'test %s' % name
-
-@app.route('/')
+@app.route('/home')
 def home():
-    return render_template('login.html')
+    return render_template('about.html')
+
 
 @app.route('/about/')
+@login_required
 def about():
     """Render the website's about page."""
     return render_template('about.html', name="Dogsuned")
+
 
 @app.route('/test/<name>')
 def test(name):
     return "%s" % name
 
+
 @app.route('/users')
+@login_required
 def show_users():
     label = ('姓名', '密码')
     users = db.session.query(User).all() # or you could have used User.query.all()
 
     return render_template('show_users.html', label = label, users=users)
 
+
 @app.route('/add-user', methods=['POST', 'GET'])
+@login_required
 def add_user():
     user_form = LoginForm()
 
     if request.method == 'POST':
         if user_form.validate_on_submit():
             # Get validated data from form
-            name = user_form.name.data # You could also have used request.form['name']
+            name = user_form.username.data # You could also have used request.form['name']
             password = user_form.password.data # You could also have used request.form['email']
 
             users = db.session.query(User).all()
@@ -159,7 +125,7 @@ def add_user():
                     return redirect(url_for('add_user'))
 
             # save user to database
-            user = User(name, password)
+            user = User(name = name, password = password)
             db.session.add(user)
             db.session.commit()
 
@@ -169,7 +135,9 @@ def add_user():
     flash_errors(user_form)
     return render_template('add_user.html', form=user_form)
 
+
 @app.route('/deluser/<name>')
+@login_required
 def del_user(name):
     users = db.session.query(User).all()
     for user in users:
@@ -180,6 +148,7 @@ def del_user(name):
             flash('user %s delete success' % name)
     return redirect(url_for('show_users'))
 
+
 # Flash errors from the form if validation fails
 def flash_errors(form):
     for field, errors in form.errors.items():
@@ -189,9 +158,11 @@ def flash_errors(form):
                 error
             ))
 
+
 ###
 # The functions below should be applicable to all Flask apps.
 ###
+
 
 @app.route('/<file_name>.txt')
 def send_text_file(file_name):

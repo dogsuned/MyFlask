@@ -1,16 +1,13 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, TextAreaField, PasswordField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
-from models import User
+from app.models import User
 
 class RegisterForm(FlaskForm):
-    username = StringField('用户名：', validators=[
-                           DataRequired(), Length(min=6, max=20)])
+    username = StringField('用户名：', validators=[DataRequired(), Length(min=6, max=20)])
     email = StringField('邮箱：', validators=[DataRequired(), Email()])
-    pwd = PasswordField('密码：', validators=[
-        DataRequired(), Length(min=8, max=120)])
-    confirm = PasswordField('确认密码：', validators=[
-                            DataRequired(), EqualTo('pwd')])
+    pwd = PasswordField('密码：', validators=[DataRequired(), Length(min=8, max=120)])
+    confirm = PasswordField('确认密码：', validators=[DataRequired(), EqualTo('pwd')])
     submit = SubmitField('提交')
 
     def validate_username(self, username):
@@ -25,8 +22,7 @@ class RegisterForm(FlaskForm):
 
 
 class LoginForm(FlaskForm):
-    username = StringField('用户名：', validators=[
-                           DataRequired(), Length(min=6, max=20)])
+    username = StringField('用户名：', validators=[DataRequired()])
     password = PasswordField('密码：', validators=[DataRequired()])
     submit = SubmitField('登陆')
 

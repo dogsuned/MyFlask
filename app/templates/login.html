@@ -19,7 +19,7 @@
 /* 前面分析过的h1标签的css，text-shadow设置阴影使文字更好看，letter-spacing设置字符间距 */ 
 .login h1 { color:#555555; text-shadow: 0px 10px 8px #CDC673; letter-spacing:2px;text-align:center;margin-bottom:20px; }
 /* 两个输入框的css，border属性设置边框线粗细以及颜色，border-radius设置边框的圆角角度 */
-input{
+.input{
     padding:10px;
     width:100%;
     color:white;
@@ -30,7 +30,7 @@ input{
     letter-spacing:2px;
 }
 /* 登录按钮的css，cursor:pointer当鼠标移到按钮上面时变成小手形状 */
-form button{
+.button{
     width:100%;
     padding:10px;
     background-color:#CDC673;
@@ -44,7 +44,12 @@ form button{
 background-attachment: fixed;">
 <div class="login">
   <h1>Login</h1>
-  {% from 'bootstrap/form.html' import render_form %} {{ render_form(form) }}
+  <form action="{{ url_for('login') }}" method="post">
+    {{ form.csrf_token }}
+    {{ form.username(class = "input", placeholder="用户名", required="required") }}
+    {{ form.password(class = "input", placeholder="密  码", required="required") }}
+    {{ form.submit(class = "button", type="submit") }}
+  </form>
 </div>
 </body>
 </html>
