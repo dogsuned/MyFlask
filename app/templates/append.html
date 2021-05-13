@@ -14,11 +14,10 @@
       </div>
     {% endif %}
   {% endwith %}
-  <form method="POST" action="{{ url_for('add_user') }}">
+  <form method="POST" action="{{ url_for('AddUser') }}">
     {{ form.csrf_token }}
     <div class="form-group">{{ form.username.label }} {{ form.username(size=20, class="form-control") }}</div>
-    <div class="form-group">{{ form.password.label }} {{ form.password(size=20, class="form-control", type="password") }}</div>
-    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" class="btn btn-primary">添 加</button>
 </form>
 </div>
 {% endblock %}

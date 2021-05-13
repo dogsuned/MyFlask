@@ -4,7 +4,11 @@ DROP TABLE IF EXISTS data;
 CREATE TABLE user (
   id integer primary key autoincrement,
   name string not null,
-  password string not null
+  password string not null,
+  authkey string not null,
+  registered integer,
+  enable integer,
+  date string not null
 );
 
 CREATE TABLE data (

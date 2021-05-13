@@ -12,13 +12,22 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key = True)
     name = db.Column(db.String(64), unique=True)
     password = db.Column(db.String(64))
+    authkey = db.Column(db.String(16))
+    registered = db.Column(db.Integer)
+    enable = db.Column(db.Integer)
+    date = db.Column(db.String(32))
     data = db.relationship('Data', backref = 'user')
 
     def generate_password_hash(self, pwd):
-        self.pwd = generate_password_hash(pwd)
+        self.pwd = pwd
+        # self.pwd = generate_password_hash(pwd)
 
     def check_password_hash(self, pwd):
-        return check_password_hash(self.pwd, pwd)
+        if self.password == pwd:
+            return True
+        else:
+            return False
+        # return check_password_hash(self.pwd, pwd)
 
     def __repr__(self):
         return '<name %s password %s id %d>' % (self.name, self.password, self.id)
