@@ -6,11 +6,16 @@ import os
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
+FILE_FOLDER = 'files'
+ALLOWED_EXTENSIONS = set(['xls', 'xlsx'])
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'ij234i23i4u3jff8sdwe'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydatabase.db'
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'mydatabase.db')
+app.config['UPLOAD_FOLDER'] = FILE_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 app.config.from_object(__name__)
 

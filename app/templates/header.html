@@ -15,6 +15,7 @@
               <li class="active"><a href="{{ url_for('home') }}">主页</a></li>
               <li><a href="{{ url_for('AllUsers') }}">用户信息</a></li>
               <li><a href="{{ url_for('AddUser') }}">添加用户</a></li>
+              <li><a href="{{ url_for('UploadFile') }}">数据上传</a></li>
             {% endif %}
             <li><a href="{{ url_for('details', name = user.name) }}">个人薪资</a></li>
           </ul>

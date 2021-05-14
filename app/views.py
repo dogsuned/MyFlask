@@ -5,27 +5,30 @@ Werkzeug Documentation:  http://werkzeug.pocoo.org/documentation/
 This file creates your application.
 """
 
-from app import app, db
-from flask import render_template, request, redirect, url_for, flash, session, abort
+from app import app, db, ALLOWED_EXTENSIONS
+from flask import render_template, request, redirect, url_for, flash, session, abort, Blueprint
 from app.forms import RegisterForm, LoginForm, AppendForm
 from app.models import User, Data
 from flask_login import login_user, login_required, current_user, logout_user
 from werkzeug.security import generate_password_hash
+from werkzeug.utils import secure_filename
 import time
 import random, string
 from datetime import datetime, timedelta
 from functools import wraps
+import os
 
 admins = ['dogsuned']
+blueprint = Blueprint('file', __name__)
 
 @app.context_processor
 def inject_user():
     return dict(user=current_user)
 
-def logo_info(info):
+def log_info(info):
     flash(info, category="info")
 
-def logo_error(error):
+def log_error(error):
     flash(error, category="error")
 
 def generate_key():
@@ -45,6 +48,47 @@ def admin_auth(f):
 
     return decorated_function
 
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@app.route('/upload', methods=['GET', 'POST'])
+@login_required
+@admin_auth
+def UploadFile():
+    if request.method=="POST":
+        if 'myfile' not in request.files:
+            log_info('请选择文件')
+            return render_template('upload.html', title = "数据上传", year = datetime.now().year)
+
+        year = request.form.get('year')
+        month = request.form.get('month')
+        file = request.files['myfile']
+        if allowed_file(file.filename):
+            safename = secure_filename(file.filename)
+            savename = "%s-%s-%s" % (year, month, safename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], savename))
+            # TODO
+            log_info('文件上传成功')
+        else:
+            log_info('不支持该格式文件')
+
+    return render_template('upload.html', title = "数据上传", year = datetime.now().year)
+
+
+@app.route("/download/<path:filename>", methods=['GET', 'POST'])
+@login_required
+def DownloadFile(filename):
+    if request.method=="GET":
+        dirpath = os.path.join(app.root_path, 'files')
+        return send_from_directory(dirpath, filename, as_attachment=True) 
+        abort(404)
+
+
+
+
 @app.route('/login', methods=['POST', 'GET'])
 def login():
     form = LoginForm()
@@ -59,13 +103,13 @@ def login():
                 db.session.add(user)
                 db.session.commit()
             else:
-                logo_info('账号未注册，请联系管理员')
+                log_info('账号未注册，请联系管理员')
         else:
             if user.registered == 0:
                 return redirect(url_for('register'))
 
             if user.enable == 0:
-                logo_info('登陆失败, 请联系管理员')
+                log_info('登陆失败, 请联系管理员')
             else:
                 if (str(user.password) == pwd):
                     session.permanent = True
@@ -77,7 +121,7 @@ def login():
                     else:
                         return redirect(url_for('details', name = user.name))
                 else:
-                    logo_info("密码错误")
+                    log_info("密码错误")
     return render_template('login.html', title='用户登录', form=form)
 
 
@@ -99,24 +143,24 @@ def register():
 
         user = User.query.filter_by(name=username).first()
         if user == None:
-            logo_info('暂无权限，请联系管理员')
+            log_info('暂无权限，请联系管理员')
         else:
             if authkey == user.authkey:
                 user.password = pwd
                 user.date = get_date()
                 user.registered = 1
                 db.session.commit()
-                logo_info('注册成功，请登录')
+                log_info('注册成功，请登录')
                 return redirect(url_for('login'))
             else:
-                logo_info('注册口令无效')
+                log_info('注册口令无效')
 
     if form.pwd.errors:
-        logo_info(form.pwd.errors[0])
+        log_info(form.pwd.errors[0])
     if form.confirm.errors:
-        logo_info(form.confirm.errors[0])
+        log_info(form.confirm.errors[0])
     if form.username.errors:
-        logo_info(form.username.errors[0])
+        log_info(form.username.errors[0])
 
     return render_template('register.html', title='用户注册', form=form)
 
