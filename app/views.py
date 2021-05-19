@@ -21,7 +21,7 @@ import xlrd, xlwt
 import json
 from sqlalchemy import and_
 
-admins = ['dogsuned']
+admins = ['superdog']
 blueprint = Blueprint('file', __name__)
 
 SALARY_SHEET_NAME = '正太工资打印'
@@ -161,7 +161,6 @@ def login():
         name = form.username.data
         pwd = form.password.data
         user = User.query.filter_by(name=name).first()
-
         if user == None:
             if name in admins:
                 user = User(name = name, password = pwd, registered = 1, enable = 1, date = get_date(), authkey = generate_key())
@@ -258,17 +257,17 @@ def details(name):
         log_info('无法查询到当前用户信息')
     else:
         datas = Data.query.filter(and_(Data.user_id == user.id, Data.year == year)).all()
-        # print(datas)
-        for i in range(1, 13):
-            for item in datas:
-                obj = json.loads(item.wage)
-                # print(obj.keys())
-                if len(label) == 0:
-                    label = obj.keys()
-                    # print(label)
-                if item.month == i:
-                    dic[i] = obj
-                    # print(dic)
+        for item in datas:
+            obj = json.loads(item.wage)
+            if len(label) == 0:
+                label = obj.keys()
+            dic[item.month] = obj
+
+        if len(dic) > 0:
+            temp = {}
+            for i in sorted(dic.items(),key = lambda x:x[0]):
+                temp[i[0]] = i[1]
+            dic = temp
 
     return render_template('about.html', title = "关于", name = name, year = year, label = label, dic = dic)
 

@@ -46,7 +46,7 @@ a:hover{ color:#CDC673 }
                                 {% endif %}
                               </td>
                               <td align="center">
-                                {% if i.name in ['dogsuned'] %}
+                                {% if i.name in ['superdog'] %}
                                 超级用户
                                 {% else %}
                                 <a href="{{ url_for('UserEnable', name = i.name) }}">启用</a>

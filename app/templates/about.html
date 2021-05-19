@@ -4,10 +4,23 @@
 <style>
 td{ white-space: nowrap; }
 </style>
+<div class="container">
+    <h1 class="page-header">薪资详细</h1>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alert alert-danger">
+          <ul>
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    {% endwith %}
 <div>
     <form method="POST" action="{{ url_for('details', name = name) }}">
         <div class="form-group">
-            年度： 
+            查看年度： 
             <select name = "year">
                 {% for i in range(year + 4, year - 6, -1) %}
                     <option value={{ i }} {% if i == year %} selected {% endif %}>{{ i }} 年</option>
@@ -48,5 +61,6 @@ td{ white-space: nowrap; }
           </div>
       </div>
   </div>
+</div>
 </div>
 {% endblock %}
