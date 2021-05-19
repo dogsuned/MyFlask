@@ -1,6 +1,52 @@
 {% extends "base.html" %}
 
 {% block main %}
-<h1 class="page-header">About</h1>
-<p>This webpage is about {{ name }}.</p>
+<style>
+td{ white-space: nowrap; }
+</style>
+<div>
+    <form method="POST" action="{{ url_for('details', name = name) }}">
+        <div class="form-group">
+            年度： 
+            <select name = "year">
+                {% for i in range(year + 4, year - 6, -1) %}
+                    <option value={{ i }} {% if i == year %} selected {% endif %}>{{ i }} 年</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">查 看</button>
+        </div>
+    </form>
+</div>
+<div class="row">
+  <div>
+      <div class="panel panel-default">
+          <div class="panel-body">
+              <div class="table-responsive" style="overflow-x:scroll;">
+                  <table class="table table-striped table-bordered table-hover">
+                      <thead align="center">
+                      <tr>
+                          {% for i in label %}
+                              <td>{{ i }}</td>
+                          {% endfor %}
+                      </tr>
+                      </thead>
+                      <tbody>
+                        {% for i in dic %}
+                          <tr>
+                            {% for item in label %}
+                            <td>
+                                {{ dic[i][item] }}
+                            </td>
+                            {% endfor %}
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+      </div>
+  </div>
+</div>
 {% endblock %}

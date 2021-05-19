@@ -17,9 +17,58 @@ import random, string
 from datetime import datetime, timedelta
 from functools import wraps
 import os
+import xlrd, xlwt
+import json
+from sqlalchemy import and_
 
 admins = ['dogsuned']
 blueprint = Blueprint('file', __name__)
+
+SALARY_SHEET_NAME = '正太工资打印'
+
+def UpdateDb(fpath, year, month):
+    workbook = xlrd.open_workbook(fpath)
+
+    if workbook == None:
+        log_info('无法打开该文件')
+        return False
+
+    names = workbook.sheet_names()
+    if not SALARY_SHEET_NAME in names:
+        log_info('未找到数据表')
+        return False
+
+    sheet = workbook.sheet_by_name(SALARY_SHEET_NAME)
+
+    label_pre = sheet.row_values(3)
+    label = sheet.row_values(4)
+    for i in range(0, len(label)):
+        if label[i] == '':
+            label[i] = label_pre[i]
+
+    users = sheet.col_values(1)
+    if len(users) < 6:
+        log_info('无效数据表')
+        return False
+
+    dic = {}
+    dic['月份'] = month
+    for i in range(5, len(users) - 6):
+        for j in range(1, sheet.ncols - 2):
+            dic[label[j].strip()] = sheet.cell_value(i, j)
+        obj = json.dumps(dic)
+
+        username = users[i]
+        user = User.query.filter_by(name=username).first()
+        if user == None:
+            user =NewUser(username)
+
+        data = Data(year, month, obj)
+        db.session.add(data)
+        user.data.append(data)
+
+    db.session.commit()
+    return True
 
 @app.context_processor
 def inject_user():
@@ -48,6 +97,12 @@ def admin_auth(f):
 
     return decorated_function
 
+def NewUser(name):
+    # save user to database
+    user = User(name = name, authkey = generate_key(), enable = 1, password = generate_key(), date = get_date(), registered = 0)
+    db.session.add(user)
+    db.session.commit()
+    return user
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -69,9 +124,19 @@ def UploadFile():
         if allowed_file(file.filename):
             safename = secure_filename(file.filename)
             savename = "%s-%s-%s" % (year, month, safename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], savename))
-            # TODO
-            log_info('文件上传成功')
+            savepath = os.path.join(app.config['UPLOAD_FOLDER'], savename)
+
+            if os.path.exists(savepath):
+                log_info('数据表已存在')
+            else:
+                file.save(savepath)
+                log_info('文件上传成功')
+
+                if UpdateDb(savepath, year, month):
+                    log_info('数据库添加成功')
+                else:
+                    os.remove(savepath)
+                    log_info('数据库添加失败')
         else:
             log_info('不支持该格式文件')
 
@@ -155,12 +220,18 @@ def register():
             else:
                 log_info('注册口令无效')
 
+    # if form.pwd.errors:
+    #     log_info(form.pwd.errors[0])
+    # if form.confirm.errors:
+    #     log_info(form.confirm.errors[0])
+    # if form.username.errors:
+    #     log_info(form.username.errors[0])
     if form.pwd.errors:
-        log_info(form.pwd.errors[0])
+        log_info('密码长度需在8~20内')
     if form.confirm.errors:
-        log_info(form.confirm.errors[0])
+        log_info('密码输入不一致')
     if form.username.errors:
-        log_info(form.username.errors[0])
+        log_info('用户名已存在')
 
     return render_template('register.html', title='用户注册', form=form)
 
@@ -171,11 +242,36 @@ def home():
     return render_template('home.html', title = "主页")
 
 
-@app.route('/about/')
+@app.route('/details/<name>', methods=['POST', 'GET'])
 @login_required
-def about():
-    """Render the website's about page."""
-    return render_template('about.html', title = "关于", name="Dogsuned")
+def details(name):
+    label = []
+    dic = {}
+    year = request.form.get('year')
+    if year:
+        year = int(year)
+    else:
+        year = datetime.now().year
+
+    user = User.query.filter_by(name = name).first()
+    if user == None:
+        log_info('无法查询到当前用户信息')
+    else:
+        datas = Data.query.filter(and_(Data.user_id == user.id, Data.year == year)).all()
+        # print(datas)
+        for i in range(1, 13):
+            for item in datas:
+                obj = json.loads(item.wage)
+                # print(obj.keys())
+                if len(label) == 0:
+                    label = obj.keys()
+                    # print(label)
+                if item.month == i:
+                    dic[i] = obj
+                    # print(dic)
+
+    return render_template('about.html', title = "关于", name = name, year = year, label = label, dic = dic)
+
 
 @app.route('/AllUsers')
 @login_required
@@ -201,11 +297,7 @@ def AddUser():
                 flash('user %s already exist' % name)
                 return redirect(url_for('AddUser'))
 
-            # save user to database
-            user = User(name = name, authkey = generate_key(), enable = 1, password = generate_key(), date = get_date(), registered = 0)
-            db.session.add(user)
-            db.session.commit()
-
+            NewUser(name)
             flash('User %s successfully added' % name)
             return redirect(url_for('AllUsers'))
 
@@ -252,10 +344,10 @@ def UserDisable(name):
         flash('操作失败')
     return redirect(url_for('AllUsers'))
 
-@app.route('/details/<name>')
-@login_required
-def details(name):
-    return render_template('details.html', title = "个人薪资", name=name)
+# @app.route('/details/<name>')
+# @login_required
+# def details(name):
+#     return render_template('details.html', title = "个人薪资", name=name)
 
 
 # Flash errors from the form if validation fails

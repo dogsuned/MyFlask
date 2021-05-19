@@ -38,7 +38,7 @@ class Data(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     year = db.Column(db.Integer)
     month = db.Column(db.Integer)
-    wage = db.Column(db.String(255))
+    wage = db.Column(db.String(2048))
     user_id = db.Column(db.Integer, db.ForeignKey(User.id))
 
     def __init__(self, year, month, wage):
