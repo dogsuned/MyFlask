@@ -7,7 +7,7 @@ This file creates your application.
 
 from app import app, db, ALLOWED_EXTENSIONS
 from flask import render_template, request, redirect, url_for, flash, session, abort, Blueprint
-from app.forms import RegisterForm, LoginForm, AppendForm
+from app.forms import RegisterForm, LoginForm, AppendForm, ResetForm
 from app.models import User, Data
 from flask_login import login_user, login_required, current_user, logout_user
 from werkzeug.security import generate_password_hash
@@ -233,6 +233,42 @@ def register():
         log_info('用户名已存在')
 
     return render_template('register.html', title='用户注册', form=form)
+
+@app.route('/ResetPwd', methods=['POST', 'GET'])
+def ResetPwd():
+    form = ResetForm()
+
+    if form.validate_on_submit():
+        username = form.username.data
+        authkey = form.authkey.data
+        pwd = form.pwd.data
+
+        user = User.query.filter_by(name=username).first()
+        if user == None:
+            log_info('用户未注册')
+        else:
+            if authkey == user.authkey:
+                user.password = pwd
+                db.session.commit()
+                log_info('密码修改成功，请登录')
+                return redirect(url_for('login'))
+            else:
+                log_info('注册口令无效')
+
+    # if form.pwd.errors:
+    #     log_info(form.pwd.errors[0])
+    # if form.confirm.errors:
+    #     log_info(form.confirm.errors[0])
+    # if form.username.errors:
+    #     log_info(form.username.errors[0])
+    if form.pwd.errors:
+        log_info('密码长度需在8~20内')
+    if form.confirm.errors:
+        log_info('密码输入不一致')
+    if form.username.errors:
+        log_info('用户未注册')
+
+    return render_template('reset.html', title='忘记密码', form=form)
 
 @app.route('/')
 @login_required

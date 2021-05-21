@@ -40,10 +40,6 @@
     margin-bottom:20px; 
 }
 
-.line {
-  padding: 0 5px;
-  color: #807d7d;
-}
 a{ text-decoration:none; color:#807d7d }
 a:hover{ color:#CDC673 }
 </style>
@@ -51,21 +47,19 @@ a:hover{ color:#CDC673 }
 <body background="../static/pic/background.jpg" style=" background-repeat:no-repeat ;background-size:100% 100%;
 background-attachment: fixed;">
 <div class="login">
-  <h1>Login</h1>
-  <form action="{{ url_for('login') }}" method="post">
-    {{form.hidden_tag()}}
+  <h1>密码重置</h1>
+  <form action="{{ url_for('ResetPwd') }}" method="post">
+    {{ form.hidden_tag() }}
     {{ form.username(class = "input", placeholder="用户名", required="required") }}
-    {{ form.password(class = "input", placeholder="密  码", required="required") }}
+    {{ form.authkey(class = "input", placeholder="注册口令", required="required") }}
+    {{ form.pwd(class = "input", placeholder="密 码", required="required") }}
+    {{ form.confirm(class = "input", placeholder="确认密码", required="required") }}
     {{ form.submit(class = "button", type="submit") }}
   </form>
-
   <div align = "center">
-    <a href="{{ url_for('register') }}">用户注册</a>
-    <span class="line">|</span>
-    <a href="{{ url_for('ResetPwd') }}">忘记密码</a>
+    <a href="{{ url_for('login') }}">返回登录</a>
   </div>
-
-  {% with message = get_flashed_messages(category_filter="info")[0] %}
+  {% with message = get_flashed_messages(category_filter="info")[-1] %}
     {% if message %}
       <script>
           alert("{{ message }}");
